@@ -17,13 +17,13 @@ P1.3 = ADC input pin from middle pin of potentiometer.
 
 Below are concise descriptions for each of the listed "void" functions within the code:
 
-```
-int main(void); = Watchdog timer is turned off. The PWM and GPIO pins are initialized. Timer0_A0 is initialized for generating a 300 Hz output on startup with a 0% duty cycle. The ADC10 peripherals are initialized, setting channel A3 or P1.3 as the ADC input pin. In the for-loop, the sampling and conversion for the next ADC value is started, and low power mode will be enabled with interrupts enabled after the loop iteration ends. Three lines with while-loops slow down the loop to let the conversion finish and to prevent the LEDs from flickering. Three if-statements control which onboard LEDs will illuminate, for confirmation that the potentiometer is either currently increasing or decreasing the ADC. The TA0CCR0 and TA0CCR1 timer registers are both changed constantly and are unaffected in between if-statements, for varying the outputting frequency.
-```
 
-```
-__interrupt void ADC10_ISR(void) = The low-power mode bit is cleared and low-power mode is set to exit after the interrupt ends. The interrupt block only serves to allow for the ADC to convert successfully into a value that can be read from the ADC10MEM register/variable.
-```
+>int main(void); = Watchdog timer is turned off. The PWM and GPIO pins are initialized. Timer0_A0 is initialized for generating a 300 Hz output on startup with a 0% duty cycle. The ADC10 peripherals are initialized, setting channel A3 or P1.3 as the ADC input pin. In the for-loop, the sampling and conversion for the next ADC value is started, and low power mode will be enabled with interrupts enabled after the loop iteration ends. Three lines with while-loops slow down the loop to let the conversion finish and to prevent the LEDs from flickering. Three if-statements control which onboard LEDs will illuminate, for confirmation that the potentiometer is either currently increasing or decreasing the ADC. The TA0CCR0 and TA0CCR1 timer registers are both changed constantly and are unaffected in between if-statements, for varying the outputting frequency.
+
+
+
+>__interrupt void ADC10_ISR(void) = The low-power mode bit is cleared and low-power mode is set to exit after the interrupt ends. The interrupt block only serves to allow for the ADC to convert successfully into a value that can be read from the ADC10MEM register/variable.
+
 
 ### Software Tools Used
 
