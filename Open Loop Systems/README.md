@@ -31,7 +31,7 @@ Below are concise descriptions for each of the listed "void" functions within th
 
 
 >main(void); = disable watchdog timer. initialize GPIO, UART, PWM, and ADC10, pins and peripherals. In the for-loop, delay the loop to prevent LED flickering. Sample and convert the voltage value at the ADC pin into a digital value. Set up the 16 different ADC range if-statements for creating the 4-bit LED counter. Within each if-statement, increase the PWM duty cycle by 50 up to 800 (i.e. 0, 100, 150, 200, 250… 750, 800). Go to low power mode and force exit the ADC10 interrupt at the end of the loop.
-```
+
 
 
 >__interrupt void ADC10_ISR(void); = clear the low power mode bit, exit it and return to main.
