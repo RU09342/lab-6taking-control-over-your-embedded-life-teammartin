@@ -24,21 +24,21 @@ P3.5 = GPIO pin bit 7 of R2R ladder
 
 Below are concise descriptions for each of the listed "void" functions within the code:
 
-```
-int main(void); = Watchdog timer is turned off. The GPIO pins are initialized. Timer1_A1 is initialized for generating a 1000 Hz output on startup with a 50% duty cycle. Depending on which function is commented out, either the Counter8bit function will be executed or the trianglewave function will be executed.
-```
 
-```
-void Counter8bit(); = Loop counter and loop delay variables i and j are defined. In the while-loop, two for-loops are designed to increment and then decrement the counter by 16 digits per iteration, giving 17*2 = 34 steps for the outputting 8 GPIO pins to output voltages from 0V to almost 3.3V and back down to 0V. The output is received after the R2R output has gone through a current feedback/forwarding op-amp. The pinOutput function is executed within each for-loop and for each i value. The i value (max is 255) is multiplied by 125 and shifted by 5 bits to convert the 0-255 range to a 0-1000 range (255*125>>5 = 996). The TA1CCR1 timer register for duty cycle is then set to the new i value. The for-loop delays here only serve to provide enough time to create a horizontal voltage signal in between each step, mainly for the pinOutput function to complete in the delaying time.
-```
+>int main(void); = Watchdog timer is turned off. The GPIO pins are initialized. Timer1_A1 is initialized for generating a 1000 Hz output on startup with a 50% duty cycle. Depending on which function is commented out, either the Counter8bit function will be executed or the trianglewave function will be executed.
 
-```
-void trianglewave(); = Loop counter variable i is defined. In the while-loop, two for-loops are designed to increment and then decrement the counter by 1 digit per iteration, giving 256 steps for the outputting triangle wave from P2.0 to output voltages from 0V to almost 3.3V and back down to 0V with a reasonably smooth wave. The output is received directly at the triangle wave output pin. The i value (max is 255) is multiplied by 125 and shifted by 5 bits to convert the 0-255 range to a 0-1000 range (255*125>>5 = 996). The TA1CCR1 timer register for duty cycle is then set to the new i value.
-```
 
-```
-void pinOutput(); = the 8 separate bit variables are initialized to be equivalent to i, the 8-bit binary number that counts up to 255, and ANDed with the corresponding bit. The 8 if-statements set the GPIO pin to be on if the respective bit variable has a value of 1. Each if-statement has an else-statement turning the GPIO pin off when the respective bit variable goes back to a value of 0.
-```
+
+>void Counter8bit(); = Loop counter and loop delay variables i and j are defined. In the while-loop, two for-loops are designed to increment and then decrement the counter by 16 digits per iteration, giving 17*2 = 34 steps for the outputting 8 GPIO pins to output voltages from 0V to almost 3.3V and back down to 0V. The output is received after the R2R output has gone through a current feedback/forwarding op-amp. The pinOutput function is executed within each for-loop and for each i value. The i value (max is 255) is multiplied by 125 and shifted by 5 bits to convert the 0-255 range to a 0-1000 range (255*125>>5 = 996). The TA1CCR1 timer register for duty cycle is then set to the new i value. The for-loop delays here only serve to provide enough time to create a horizontal voltage signal in between each step, mainly for the pinOutput function to complete in the delaying time.
+
+
+
+>void trianglewave(); = Loop counter variable i is defined. In the while-loop, two for-loops are designed to increment and then decrement the counter by 1 digit per iteration, giving 256 steps for the outputting triangle wave from P2.0 to output voltages from 0V to almost 3.3V and back down to 0V with a reasonably smooth wave. The output is received directly at the triangle wave output pin. The i value (max is 255) is multiplied by 125 and shifted by 5 bits to convert the 0-255 range to a 0-1000 range (255*125>>5 = 996). The TA1CCR1 timer register for duty cycle is then set to the new i value.
+
+
+
+>void pinOutput(); = the 8 separate bit variables are initialized to be equivalent to i, the 8-bit binary number that counts up to 255, and ANDed with the corresponding bit. The 8 if-statements set the GPIO pin to be on if the respective bit variable has a value of 1. Each if-statement has an else-statement turning the GPIO pin off when the respective bit variable goes back to a value of 0.
+
 
 ### Software Tools Used
 
