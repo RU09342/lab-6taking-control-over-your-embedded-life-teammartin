@@ -1,16 +1,30 @@
-# Lab 6: "High Power" Control
-For starters, you will not be dealing with anything that is truly "high power". Instead, what I am considering "high power" is anything with the potential to damage or fry your microcontrollers if you were to drive them directly. The idea behind this part of the lab is to learn how not only to drive things that may require a high voltage or high current, but how to then protect your microcontroller from them.
+# High Power Control: MOSFET Switch and MOSFET-to-Relay Switch
 
-## Switching
-Most of you have used one of the types of switching circuits to control the RGB LEDs. For this part of the lab, you need to focus on the different types of switching circuits along with the differences in inductive and resistive loads.
+This program is loaded onto the MSP430G2553 to create a simple TimerA0 frequency controller by using a 5 Kohm potentiometer. The ADc value is set equal to both TA0CCR0 and TA0CCR1 registers of TimerA0, thus changing the frequency and the duty cycle together, ensuring that the duty cycle remains at 50%. This generates a steady and changeable square wave (rectangular pulse train). Three if-statements also control the onboard LEDs, determined by three conditions waiting for the ADC value to match them. Using the potentiometer, both switches are tested with oscilloscope probes to see how high of a frequency both can withstand before distortion occurs. The MOSFET switch can handle up to 200 Hz before distinct rounded sides appear. The MOSFET-to-Relay switch, however, can only handle around 145-150 Hz before severe warping and bending of the outputting signal occurs (long rising signal slopes caused by the coil taking too much time to gather enough current to flip the internal switch). The CQ1-12V relay coil requires at minimum a 53.3 mA current, where the current coming out of the MSP430G2553's PWM output pin is boosted by one or even two n-channel MOSFETS (darlington pair if more current is required). In this case, a single 2N7000 NMOS is able to provide enough current. The maximum current that the relay can draw in is rated for 20A, thus the implementation of the circuit from the corresponding schematic is crucial to ensure that back EMF does not occur and immediately fries the MSP430 board (the flyback diode adjacent to the relay may not be enough discrete components to prevent back EMF, depending on the device attached to the relay). This MOSFET alone requires almost zero current to route the source voltage (GND) to the drain circuit (and to Vcc); only a sufficient voltage needs to be present. According to the datasheet, the 2N7000 can handle up to 200 mA of continuous current or 500 mA of pulsed current, but it does require at minimum a current of 75 mA to operate. In summary, the MOSFET switch can handle small battery-operated functions and can withstand a higher DC frequency input, along with less distortion near its peak frequency. The MOSFET-to-Relay switch can handle very large devices or networks of devices with power-based functions, but falter at lower frequencies with more noise being outputted.
 
-### Relays
-A relay is a electro-mechanical system which can open and close a switch based on an input. 
-![Relay](https://www.phidgets.com/docs/images/1/1d/3051_1_Relay_Diagram.jpg)
-These are extremely useful in situations where large amounts of current need to flow, such as in automotive applications, but they do have their limits. For starters, since the actuation process requires a constant current, sometimes this can be too much for your processor to handle. Second, a lot of these relays require higher than 3.3V, which limits how you can actually turn these things on and off. Using the MSP430G2553, control the state of a relay to drive a power resistor with +12V. Your README for this part should include a screenshot of the output of your MSP and the voltage across the resistor. Try to figure out the switching speed limitations of the relay experimentally.
+### Installing on MSP430G2553
 
-### MOSFET Switching
-The MOSFET switch is a very simple circuit which can be used in a multitude of applications. One of the most important features of the MOSFET Switch is the near zero current it takes to switch the MOSFET from an on to an off state. There are two main architectures, low-side and high-side switch, each requiring a different type of MOSFET. Using the MSP430G2553, drive a power resistor with +12V in the same fashion as the relay. Obtain an MSP430G2553 voltage output along with the voltage through the power resistor. Try to figure out the switching speed limitations of the MOSFET experimentally.
+The provided schematics are recreated onto the breadboard before loading the coded program. The gate of the n-channel MOSFET and the parallel-wired pull-down resistor are wired to the PWM output pin P1.2. The ADC pin P1.3 is wired to the middle pin of the potentiometer. One end-pin of the potentiometer goes to Vcc and the other goes to GND, these two pins can be wired to either one. The flat-head screw on the top of the potentiometer can be twisted with a screwdriver to increase or decrease the ADC value, and subsequently the PWM frequency output. The two output of the schematic circuits are wired to an oscilloscope and voltometer to test for the maximum frequency inputs of both circuits. 
 
-## Deliverables
-Along with what was asked in each part, you will need to utilize the DMM to determine what the current draw from each switch is and if that falls into spec with the Microcontroller. You need to then come up with the best configuration you can think of using to control something that requires large current, but also protects your processor from damage. The reason I am asking you to do this with just the G2553 is: A) The code is just generating a square wave, and B) this part of the lab runs the highest chance of damaging your parts and we have spare G2553's just in case.
+Pins used:
+
+```
+P1.2 = PWM varying frequency output pin. constant 50% duty cycle.
+P1.3 = ADC input pin from middle pin of potentiometer.
+```
+
+### Code-Breakdown
+
+Below are concise descriptions for each of the listed "void" functions within the code:
+
+```
+int main(void); = Watchdog timer is turned off. The PWM and GPIO pins are initialized. Timer0_A0 is initialized for generating a 300 Hz output on startup with a 0% duty cycle. The ADC10 peripherals are initialized, setting channel A3 or P1.3 as the ADC input pin. In the for-loop, the sampling and conversion for the next ADC value is started, and low power mode will be enabled with interrupts enabled after the loop iteration ends. Three lines with while-loops slow down the loop to let the conversion finish and to prevent the LEDs from flickering. Three if-statements control which onboard LEDs will illuminate, for confirmation that the potentiometer is either currently increasing or decreasing the ADC. The TA0CCR0 and TA0CCR1 timer registers are both changed constantly and are unaffected in between if-statements, for varying the outputting frequency.
+```
+
+```
+__interrupt void ADC10_ISR(void) = The low-power mode bit is cleared and low-power mode is set to exit after the interrupt ends. The interrupt block only serves to allow for the ADC to convert successfully into a value that can be read from the ADC10MEM register/variable.
+```
+
+### Software Tools Used
+
+* [Code Composer Studio](https://dev.ti.com/) - Code compiling program (CCS). 

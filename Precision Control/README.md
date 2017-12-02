@@ -1,16 +1,45 @@
-# Lab 6: Precision Control
-Some applications require large amounts of voltage or current, so switching techniques must be used in order to provide the desired output. Other cases however require a finer control over the voltage or current going into them (some even require a control over resistance). So far you have looked at PWM to control the brightness of an LED, is there a way to use this to output a specified voltage or current, or even a specific waveform?
+# Precision Control: Triangle Wave and FFT, 8-bit Counter to R2R Ladder
 
-## PWM Part 2
-Since you already have the code to perform PWM, then really, the software side of this part of the lab is fairly easy. You need to design a system which can take in a PWM duty cycle over something like UART (or you could have your system read in the position of a potentiometer), and produce that signal on a GPIO. The interesting part comes in when I want the output of your system to be an Analog voltage. In this case, a PWM with a 50% duty cycle should produce roughly Vcc/2 volts. This part of the lab should be done with the MSP430F5529 and the physical circuit should be constructed of an active Low-Pass Filter.
+This program generates both a triangle wave output and an 8-bit binary counter that feeds into an R2R ladder for generating a staircase wave function. The R2R ladder is created onto a breadboard, following the provided schematic, and the 8 input pins are wired to their respective GPIO output pins to create a circuit that slowly increases in voltage for each binary number until the maximum 8-bit binary number of 255 has been reached, and then incrementally go to the minimum 8-bit binary number of 0 in the same fashion. There is also an op-amp wired to the output of the R2R ladder resistors, which serves to revive the lost current from within the various resistors for being accurately measured by the oscilloscope.  
 
-## R2R DAC
-What if your system is noise sensitive or possibly needs more precision than just a PWM signal, you might need to look into using an actual Digital-to-Analog converter. One of the simplest DAC architectures is a R2R ladder. Using the MSP430F5529, you need to generate an 8-bit R2R ladder circuit that can produce "255" voltages between 0V and Vcc. Now how are you actually going to test this, cause I am sure you aren't going to measure 255 voltages on the DMM. You should set up your F5529 so it generates a staircase using a binary counter and then record on the oscilloscope the resulting waveform.
+### Installing on MSP430F5529
 
-## Loading Effects
-Obviously you are going to be making this type of circuitry to drive something. This introduces the idea of loading effect, wherein your circuit will perform differently based on what is going to be attached to it. For each of these implementations, try placing a variety of resistors from 100 ohms up to see what happens to your output signal and comment on what is happening.
+If the triangle wave is desired to be extracted from the program, then line 28 (Counter8bit();) is commented out and line 29 (trianglewave();) is uncommented. A wire is connected directly to P2.0 the triangle wave's output pin and fed to an oscilloscope for validation and testing for rising and falling linearities. If the R2R ladder implementation is desired to be extracted, then line 29 is uncommented and line 28 is commented out. The 8 GPIO pins are wired to the R2R ladder input pins that represent the binary bit position in the 8-bit binary number representing the value of 0 to 255 (the i variable). The output is then received out of the op-amp that inputs the output of the R2R ladder's sequence of resistors. A wire is connected directly to to the output of this op-amp and fed to an oscilloscope for validation of a step function / staircase function. 
 
-## Deliverables
-Along with what was asked in each of the parts above, for each implementation, you need to generate at least one triangle wave from your microntroller. This can be done by simply incrementing and decrementing values that are being sent to your circuit. You need to measure the output of each one of these along with taking the FFT on the scope of each one. The span on the FFT will need to go from 1kHz to about 50kHz if possible. You then need to compare the integrity of each signal by analyzing the difference in frequency components.
+Pins used:
 
-The README for this part is going to be mainly about the results of your measurement along with information on the implementation. You need to also talk about how you generated the triangle wave, but do not give me a dissertation on it. Since this is going to be talking about hardware, you need to place in the README a Bill Of Materials listing all hardware used as well as link to a Digikey cart which contains the parts needed in the right quantity. You do not need to include things like your F5529 or the breadboard or wires.
+```
+P2.0 = triangle wave output pin
+P6.0 = GPIO pin bit 0 of R2R ladder
+P6.1 = GPIO pin bit 1 of R2R ladder
+P6.2 = GPIO pin bit 2 of R2R ladder
+P6.3 = GPIO pin bit 3 of R2R ladder
+P6.4 = GPIO pin bit 4 of R2R ladder
+P7.0 = GPIO pin bit 5 of R2R ladder
+P3.6 = GPIO pin bit 6 of R2R ladder
+P3.5 = GPIO pin bit 7 of R2R ladder
+```
+
+### Code-Breakdown
+
+Below are concise descriptions for each of the listed "void" functions within the code:
+
+```
+int main(void); = Watchdog timer is turned off. The GPIO pins are initialized. Timer1_A1 is initialized for generating a 1000 Hz output on startup with a 50% duty cycle. Depending on which function is commented out, either the Counter8bit function will be executed or the trianglewave function will be executed.
+```
+
+```
+void Counter8bit(); = Loop counter and loop delay variables i and j are defined. In the while-loop, two for-loops are designed to increment and then decrement the counter by 16 digits per iteration, giving 17*2 = 34 steps for the outputting 8 GPIO pins to output voltages from 0V to almost 3.3V and back down to 0V. The output is received after the R2R output has gone through a current feedback/forwarding op-amp. The pinOutput function is executed within each for-loop and for each i value. The i value (max is 255) is multiplied by 125 and shifted by 5 bits to convert the 0-255 range to a 0-1000 range (255*125>>5 = 996). The TA1CCR1 timer register for duty cycle is then set to the new i value. The for-loop delays here only serve to provide enough time to create a horizontal voltage signal in between each step, mainly for the pinOutput function to complete in the delaying time.
+```
+
+```
+void trianglewave(); = Loop counter variable i is defined. In the while-loop, two for-loops are designed to increment and then decrement the counter by 1 digit per iteration, giving 256 steps for the outputting triangle wave from P2.0 to output voltages from 0V to almost 3.3V and back down to 0V with a reasonably smooth wave. The output is received directly at the triangle wave output pin. The i value (max is 255) is multiplied by 125 and shifted by 5 bits to convert the 0-255 range to a 0-1000 range (255*125>>5 = 996). The TA1CCR1 timer register for duty cycle is then set to the new i value.
+```
+
+```
+void pinOutput(); = the 8 separate bit variables are initialized to be equivalent to i, the 8-bit binary number that counts up to 255, and ANDed with the corresponding bit. The 8 if-statements set the GPIO pin to be on if the respective bit variable has a value of 1. Each if-statement has an else-statement turning the GPIO pin off when the respective bit variable goes back to a value of 0.
+```
+
+### Software Tools Used
+
+* [Code Composer Studio](https://dev.ti.com/) - Code compiling program (CCS). 
